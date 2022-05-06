@@ -3,6 +3,7 @@ app = Flask(__name__)
 from pymongo import MongoClient
 client = MongoClient('mongodb+srv://test:sparta@cluster0.3saeh.mongodb.net/Cluster0?retryWrites=true&w=majority')
 db = client.dbsparta
+from time import *
 
 
 @app.route('/')
@@ -13,11 +14,10 @@ def home():
 @app.route("/bucket", methods=["POST"])
 def bucket_post():
     bucket_receive = request.form['bucket_give']
-    bucket_list = list(db.bucket.find({}, {'_id': False}))
-    count = len(bucket_list) + 1
+    bucket_id = str(time())
 
     doc = {
-        'num': count,
+        'bucket_id': bucket_id,
         'bucket': bucket_receive,
         'done': 0
     }
@@ -27,16 +27,23 @@ def bucket_post():
 
 @app.route("/bucket/done", methods=["POST"])
 def bucket_done():
-    num_receive = request.form['num_give']
-    db.bucket.update_one({'num': int(num_receive)}, {'$set': {'done': 1}})
+    id_receive = request.form['id_give']
+    db.bucket.update_one({'bucket_id': str(id_receive)}, {'$set': {'done': 1}})
     return jsonify({'msg': '버킷 완료!'})
 
 
 @app.route("/bucket/cancel", methods=["POST"])
 def bucket_cancel():
-    num_receive = request.form['num_give']
-    db.bucket.update_one({'num': int(num_receive)}, {'$set': {'done': 0}})
+    id_receive = request.form['id_give']
+    db.bucket.update_one({'bucket_id': str(id_receive)}, {'$set': {'done': 0}})
     return jsonify({'msg': '버킷 취소!'})
+
+
+@app.route("/bucket/delete", methods=["POST"])
+def bucket_delete():
+    id_receive = request.form['id_give']
+    db.bucket.delete_one({'bucket_id': str(id_receive)})
+    return jsonify({'msg': '버킷 삭제!'})
 
 
 @app.route("/bucket", methods=["GET"])
